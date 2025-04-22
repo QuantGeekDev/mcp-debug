@@ -41,6 +41,8 @@ interface SidebarProps {
   setEnv: (env: Record<string, string>) => void;
   bearerToken: string;
   setBearerToken: (token: string) => void;
+  customHeaders: Record<string, string>;
+  setCustomHeaders: (headers: Record<string, string>) => void;
   directConnection: boolean;
   setDirectConnection: (direct: boolean) => void;
   onConnect: () => void;
@@ -64,6 +66,8 @@ const Sidebar = ({
   setEnv,
   bearerToken,
   setBearerToken,
+  customHeaders,
+  setCustomHeaders,
   directConnection,
   setDirectConnection,
   onConnect,
@@ -75,7 +79,9 @@ const Sidebar = ({
   const [theme, setTheme] = useTheme();
   const [showEnvVars, setShowEnvVars] = useState(false);
   const [showBearerToken, setShowBearerToken] = useState(false);
+  const [showCustomHeaders, setShowCustomHeaders] = useState(false);
   const [shownEnvVars, setShownEnvVars] = useState<Set<string>>(new Set());
+  const [shownHeaderValues, setShownHeaderValues] = useState<Set<string>>(new Set());
 
   const handleTransportTypeChange = (type: "stdio" | "sse" | "streamableHttp") => {
     setTransportType(type);
@@ -203,6 +209,125 @@ const Sidebar = ({
                   </div>
                 )}
               </div>
+              {(transportType === "streamableHttp" && directConnection) && (
+                <div className="space-y-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCustomHeaders(!showCustomHeaders)}
+                    className="flex items-center w-full"
+                  >
+                    {showCustomHeaders ? (
+                      <ChevronDown className="w-4 h-4 mr-2" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 mr-2" />
+                    )}
+                    Custom Headers
+                  </Button>
+                  {showCustomHeaders && (
+                    <div className="space-y-2">
+                      {Object.entries(customHeaders).map(([key, value], idx) => (
+                        <div key={idx} className="space-y-2 pb-4">
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Header Name"
+                              value={key}
+                              onChange={(e) => {
+                                const newKey = e.target.value;
+                                const newHeaders = Object.entries(customHeaders).reduce(
+                                  (acc, [k, v]) => {
+                                    if (k === key) {
+                                      acc[newKey] = value;
+                                    } else {
+                                      acc[k] = v;
+                                    }
+                                    return acc;
+                                  },
+                                  {} as Record<string, string>,
+                                );
+                                setCustomHeaders(newHeaders);
+                                setShownHeaderValues((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(key)) {
+                                    next.delete(key);
+                                    next.add(newKey);
+                                  }
+                                  return next;
+                                });
+                              }}
+                              className="font-mono"
+                            />
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="h-9 w-9 p-0 shrink-0"
+                              onClick={() => {
+                                const { [key]: _removed, ...rest } = customHeaders;
+                                setCustomHeaders(rest);
+                              }}
+                            >
+                              ×
+                            </Button>
+                          </div>
+                          <div className="flex gap-2">
+                            <Input
+                              type={shownHeaderValues.has(key) ? "text" : "password"}
+                              placeholder="Value"
+                              value={value}
+                              onChange={(e) => {
+                                const newHeaders = { ...customHeaders };
+                                newHeaders[key] = e.target.value;
+                                setCustomHeaders(newHeaders);
+                              }}
+                              className="font-mono"
+                            />
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-9 w-9 p-0 shrink-0"
+                              onClick={() => {
+                                setShownHeaderValues((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(key)) {
+                                    next.delete(key);
+                                  } else {
+                                    next.add(key);
+                                  }
+                                  return next;
+                                });
+                              }}
+                              aria-label={
+                                shownHeaderValues.has(key) ? "Hide value" : "Show value"
+                              }
+                              aria-pressed={shownHeaderValues.has(key)}
+                              title={
+                                shownHeaderValues.has(key) ? "Hide value" : "Show value"
+                              }
+                            >
+                              {shownHeaderValues.has(key) ? (
+                                <Eye className="h-4 w-4" aria-hidden="true" />
+                              ) : (
+                                <EyeOff className="h-4 w-4" aria-hidden="true" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      <Button
+                        variant="outline"
+                        className="w-full mt-2"
+                        onClick={() => {
+                          const key = "";
+                          const newHeaders = { ...customHeaders };
+                          newHeaders[key] = "";
+                          setCustomHeaders(newHeaders);
+                        }}
+                      >
+                        Add Header
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
           {transportType === "stdio" && (

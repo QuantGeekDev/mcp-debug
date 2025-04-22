@@ -89,6 +89,7 @@ const App = () => {
   const [bearerToken, setBearerToken] = useState<string>(() => {
     return localStorage.getItem("lastBearerToken") || "";
   });
+  const [customHeaders, setCustomHeaders] = useState<Record<string, string>>({});
   const [directConnection, setDirectConnection] = useState<boolean>(() => {
     return localStorage.getItem("lastDirectConnection") === "true" || false;
   });
@@ -134,6 +135,7 @@ const App = () => {
     sseUrl,
     env,
     bearerToken,
+    customHeaders,
     directConnection,
     proxyServerUrl: PROXY_SERVER_URL,
     onNotification: (notification) => {
@@ -459,6 +461,8 @@ const App = () => {
         setEnv={setEnv}
         bearerToken={bearerToken}
         setBearerToken={setBearerToken}
+        customHeaders={customHeaders}
+        setCustomHeaders={setCustomHeaders}
         directConnection={directConnection}
         setDirectConnection={setDirectConnection}
         onConnect={connectMcpServer}

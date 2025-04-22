@@ -56,6 +56,7 @@ interface UseConnectionOptions {
   env: Record<string, string>;
   proxyServerUrl: string;
   bearerToken?: string;
+  customHeaders?: Record<string, string>;
   requestTimeout?: number;
   directConnection?: boolean;
   onNotification?: (notification: Notification) => void;
@@ -107,6 +108,7 @@ export function useConnection({
   env,
   proxyServerUrl,
   bearerToken,
+  customHeaders = {},
   requestTimeout = DEFAULT_REQUEST_TIMEOUT_MSEC,
   directConnection = false,
   onNotification,
@@ -296,7 +298,7 @@ export function useConnection({
           console.warn("CORS preflight test failed. Connection might still work, but be prepared for CORS errors.");
         }
         
-        const directHeaders: Record<string, string> = {};
+        const directHeaders: Record<string, string> = {...customHeaders};
         if (bearerToken) {
           directHeaders["Authorization"] = `Bearer ${bearerToken}`;
         }
@@ -312,6 +314,7 @@ export function useConnection({
             useCredentials: false 
           });
         } else if (transportType === "streamableHttp") {
+          console.log("Creating streamableHttp transport with headers:", directHeaders);
           clientTransport = new DirectStreamableHttpTransport(serverUrl, {
             headers: directHeaders,
             useCredentials: false 
